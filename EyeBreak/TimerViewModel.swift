@@ -11,7 +11,7 @@ import IOKit.hid
 
 class TimerViewModel: ObservableObject {
     
-    @Published var currentTime: String = "Starting..."
+    @Published var timeLabel: String = "Starting..."
     @Published var isRunning: Bool = false
     @Published var isOnBreak: Bool = false
     
@@ -33,6 +33,8 @@ class TimerViewModel: ObservableObject {
         self.breakTime = self.settings.breakTime
         self.countdownRemaining = self.settings.intervalTime
         
+        NotificationCenter.default.addObserver(self, selector: #selector(resetTimerNotificationReceived), name: NSNotification.Name("ResetTimerNotification"), object: nil)
+        
         startTimer()
     }
     
@@ -50,15 +52,18 @@ class TimerViewModel: ObservableObject {
         if countdownRemaining > 0 {
             if getIdleTime() < 10 {
                 countdownRemaining -= 1
-                currentTime = TimerViewModel.formatTime(countdownRemaining)
+                timeLabel = TimerViewModel.formatTime(countdownRemaining)
             }
         } else {
             timer?.invalidate()
             timer = nil
             
             isOnBreak = true
-            currentTime = "Look away now..."
-            resetTimer()
+            timeLabel = "Look away now..."
+            DispatchQueue.main.asyncAfter(deadline: .now() + self.breakTime) { [weak self] in
+                guard let self = self else { return }
+                resetTimer()
+            }
             scheduleNotification()
         }
     }
@@ -73,11 +78,15 @@ class TimerViewModel: ObservableObject {
     }
     
     func resetTimer() {
-        DispatchQueue.main.asyncAfter(deadline: .now() + self.breakTime) { [weak self] in
-            guard let self = self else { return }
-            self.countdownRemaining = self.intervalTime
-            self.resumeTimer()
-        }
+        self.countdownRemaining = self.intervalTime
+        self.resumeTimer()
+    }
+    
+    func settingsDidChange() {
+        self.intervalTime = UserDefaults.standard.double(forKey: "intervalTime")
+        self.breakTime = UserDefaults.standard.double(forKey: "breakTime")
+        
+        resetTimer()
     }
     
     static func formatTime(_ timeInterval: TimeInterval) -> String {
@@ -122,4 +131,7 @@ class TimerViewModel: ObservableObject {
         return idleTime
     }
     
+    @objc func resetTimerNotificationReceived() {
+        settingsDidChange()
+    }
 }

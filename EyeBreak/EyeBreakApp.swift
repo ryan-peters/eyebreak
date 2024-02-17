@@ -22,7 +22,7 @@ struct EyeBreakApp: App {
     var body: some Scene {
         
         MenuBarExtra() {
-            Text(timerViewModel.currentTime)
+            Text(timerViewModel.timeLabel)
             Button(timerViewModel.isRunning ? "Pause Clock" : "Start Clock") {
                 timerViewModel.isRunning ? timerViewModel.pauseTimer() : timerViewModel.resumeTimer()
             }

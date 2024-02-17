@@ -58,7 +58,8 @@ struct SettingsView: View {
                     settings.intervalTime = tempIntervalTime
                     settings.breakTime = tempBreakTime
                     settings.showDockIcon = tempShowDockIcon
-                    
+                    NotificationCenter.default.post(name: NSNotification.Name("ResetTimerNotification"), object: nil)
+
                     closeWindow()
                 }.padding()
             }
