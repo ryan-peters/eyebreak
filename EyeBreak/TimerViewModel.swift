@@ -14,11 +14,12 @@ class TimerViewModel: ObservableObject {
     @Published var timeLabel: String = "Starting..."
     @Published var isRunning: Bool = false
     @Published var isOnBreak: Bool = false
-    
     @Published var intervalTime: Double
     @Published var breakTime: Double
+    @Published var showBreakOverNotification: Bool
+    
     private var settings = Settings()
-    var breakTimer: TimeInterval = 20
+    
     var countdownRemaining: TimeInterval
     var timer: Timer?
     
@@ -32,6 +33,7 @@ class TimerViewModel: ObservableObject {
         self.intervalTime = self.settings.intervalTime
         self.breakTime = self.settings.breakTime
         self.countdownRemaining = self.settings.intervalTime
+        self.showBreakOverNotification = self.settings.showBreakOverNotification
         
         NotificationCenter.default.addObserver(self, selector: #selector(resetTimerNotificationReceived), name: NSNotification.Name("ResetTimerNotification"), object: nil)
         
@@ -57,14 +59,18 @@ class TimerViewModel: ObservableObject {
         } else {
             timer?.invalidate()
             timer = nil
-            
             isOnBreak = true
             timeLabel = "Look away now..."
+            
             DispatchQueue.main.asyncAfter(deadline: .now() + self.breakTime) { [weak self] in
                 guard let self = self else { return }
+                
+                if (showBreakOverNotification) { scheduleBreakStopNotification() }
                 resetTimer()
             }
-            scheduleNotification()
+            
+            scheduleBreakStartNotification()
+    
         }
     }
     
@@ -85,7 +91,7 @@ class TimerViewModel: ObservableObject {
     func settingsDidChange() {
         self.intervalTime = UserDefaults.standard.double(forKey: "intervalTime")
         self.breakTime = UserDefaults.standard.double(forKey: "breakTime")
-        
+        self.showBreakOverNotification = UserDefaults.standard.bool(forKey: "showBreakOverNotification")
         resetTimer()
     }
     
@@ -96,10 +102,21 @@ class TimerViewModel: ObservableObject {
         return String(format: "\(minutes) \(label)" )
     }
     
-    func scheduleNotification() {
+    func scheduleBreakStartNotification() {
         let content = UNMutableNotificationContent()
         content.title = "Eye Break"
-        content.body = "Look away from the screen for 20 seconds"
+        content.body = "Look away from the screen for \(Int(breakTime)) seconds"
+        content.sound = UNNotificationSound.default
+        
+        let request = UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: nil)
+        UNUserNotificationCenter.current().add(request)
+    }
+    
+    func scheduleBreakStopNotification() {
+        print ("scheduling")
+        let content = UNMutableNotificationContent()
+        content.title = "Eye Break"
+        content.body = "You can resume your work now"
         content.sound = UNNotificationSound.default
         
         let request = UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: nil)

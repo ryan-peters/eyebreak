@@ -25,11 +25,17 @@ class Settings: ObservableObject {
             updateDockIconVisibility(show: showDockIcon)
         }
     }
+    @Published var showBreakOverNotification: Bool {
+        didSet {
+            UserDefaults.standard.set(showBreakOverNotification,  forKey: "showBreakOverNotification")
+        }
+    }
     
     init() {
         self.intervalTime = UserDefaults.standard.double(forKey: "intervalTime")
         self.breakTime = UserDefaults.standard.double(forKey: "breakTime")
         self.showDockIcon = UserDefaults.standard.bool(forKey: "showDockIcon")
+        self.showBreakOverNotification = UserDefaults.standard.bool(forKey: "showBreakOverNotification")
         
         if self.intervalTime == 0 { self.intervalTime = 1200 }
         if self.breakTime == 0 { self.breakTime = 20 }

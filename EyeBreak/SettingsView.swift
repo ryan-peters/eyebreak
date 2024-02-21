@@ -13,12 +13,14 @@ struct SettingsView: View {
     @State private var tempIntervalTime: Double
     @State private var tempBreakTime: Double
     @State private var tempShowDockIcon: Bool
+    @State private var tempShowBreakOverNotification: Bool
     
     init(settings: Settings) {
         self.settings = settings
         _tempIntervalTime = State(initialValue: settings.intervalTime)
         _tempBreakTime = State(initialValue: settings.breakTime)
         _tempShowDockIcon = State(initialValue: settings.showDockIcon)
+        _tempShowBreakOverNotification = State(initialValue: settings.showBreakOverNotification)
         
     }
     
@@ -46,18 +48,23 @@ struct SettingsView: View {
                 Toggle(isOn: $tempShowDockIcon) {
                     Text("Show App Icon in Dock")
                 }.padding()
-                
+                Toggle(isOn: $tempShowBreakOverNotification) {
+                    Text("Notify when eye break is over")
+                }.padding()
             }
             HStack{
                 Button("Reset") {
                     tempIntervalTime = settings.intervalTime
                     tempBreakTime = settings.breakTime
                     tempShowDockIcon = settings.showDockIcon
+                    tempShowBreakOverNotification = settings.showBreakOverNotification
                 }
                 Button("Save"){
                     settings.intervalTime = tempIntervalTime
                     settings.breakTime = tempBreakTime
                     settings.showDockIcon = tempShowDockIcon
+                    settings.showBreakOverNotification = tempShowBreakOverNotification
+                    
                     NotificationCenter.default.post(name: NSNotification.Name("ResetTimerNotification"), object: nil)
 
                     closeWindow()
